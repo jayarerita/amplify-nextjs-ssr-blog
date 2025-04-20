@@ -1,0 +1,29 @@
+  "dependencies": {
+    "@aws-amplify/adapter-nextjs": "^1.6.0",
+    "@aws-amplify/ui-react": "^6.5.5",
+    "aws-amplify": "^6.14.2",
+    "next": "^14.2.28",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@aws-amplify/backend": "^1.14.3",
+    "@aws-amplify/backend-cli": "^1.3.0",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "aws-cdk": "^2",
+    "aws-cdk-lib": "^2",
+    "constructs": "^10.3.0",
+    "esbuild": "^0.25.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.2"
+  }
+
+
+npm install @aws-amplify/adapter-nextjs @aws-amplify/ui-react aws-amplify next react react-dom @tanstack/react-query tailwindcss @tailwindcss/postcss postcss @radix-ui/react-navigation-menu
+npm install -D @aws-amplify/backend @aws-amplify/backend-cli @types/node @types/react @types/react-dom aws-cdk aws-cdk-lib constructs esbuild tsx typescript @tanstack/eslint-plugin-query @tanstack/react-query-devtools
+npx shadcn@latest init
+
+Please switch the default styles to shadcn. The aws-amplify/react-ui library requires the use of client components for all of its elements.
+
