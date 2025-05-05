@@ -1,32 +1,51 @@
 'use client';
 
-import Link from 'next/link';
-import { Button } from '@aws-amplify/ui-react';
-import { BlogPostList } from '@/components/BlogPostList';
+import { Button } from '@/components/ui/button';
+import { useGenerateDemoData, useDeleteDemoData } from '@/lib/hooks/use-demo-data';
+import { Loader2 } from 'lucide-react';
+import { BlogPostList } from '@/components/BlogPostListInfiniteScroll';
 
 export default function AdminDashboard() {
+  const { mutate: generateDemoData, isPending: isGenerating } = useGenerateDemoData();
+  const { mutate: deleteDemoData, isPending: isDeleting } = useDeleteDemoData();
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto py-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <div className="mt-4 flex space-x-4">
           <Button
-            as={Link}
-            href="/admin/posts/new"
-            variation="link"
+            onClick={() => generateDemoData(10)}
+            disabled={isGenerating || isDeleting}
           >
-            Create New Post
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                Generating...
+              </>
+            ) : (
+              'Generate Demo Data'
+            )}
           </Button>
           <Button
-            as={Link}
-            href="/admin/upload"
-            variation="link"
+            onClick={() => deleteDemoData()}
+            disabled={isGenerating || isDeleting}
+            variant="destructive"
           >
-            Upload Markdown
+            {isDeleting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                Deleting...
+              </>
+            ) : (
+              'Delete Demo Data'
+            )}
           </Button>
         </div>
       </div>
-      <BlogPostList />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <BlogPostList />
+      </div>
     </div>
   );
 } 

@@ -1,10 +1,9 @@
 import { notFound } from 'next/navigation';
 import { cookiesClient } from "@/lib/utils/amplify-utils";
 import RenderMarkdown from '@/components/RenderMarkdown';
-import './posts.css';
 import { Metadata, ResolvingMetadata } from 'next';
 import CoverImage from '@/components/CoverImage';
-import { ScrollProgress } from '@/components/magicui/scroll-progress';
+import { BlogPostCardAuthor } from '@/components/BlogPostAuthor';
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -31,6 +30,7 @@ export async function generateMetadata(
   const previousImages = (await parent).openGraph?.images || []
 
   return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
     title: post.metaTitle || post.title || '',
     description: post.metaDescription || post.excerpt || '',
     openGraph: {
@@ -88,11 +88,20 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         <CoverImage imageKey={post.coverImageKey} altText={post.coverImageAlt ?? post.title}/>
       )}
       <h1 className="mb-4">{post.title}</h1>
-      <p className="text-gray-500 mb-6">
+      <BlogPostCardAuthor authorId={post.owner} />
+      <p className="text-muted-foreground">
         Published on {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : ''}
       </p>
-      <article className="prose max-w-none">
-        <RenderMarkdown markdownKey={post.markdownKey ?? ''} />
+      {post.readingTime && (
+        <p className="text-muted-foreground">
+          {post.readingTime} min read
+        </p>
+      )}
+
+      <article className="mx-auto max-w-3xl">
+        <div className="markdown">
+          <RenderMarkdown markdownKey={post.markdownKey} />
+        </div>
       </article>
     </main>
   );

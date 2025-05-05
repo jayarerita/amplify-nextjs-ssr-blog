@@ -9,7 +9,7 @@ import { type Schema } from "@/amplify/data/resource";
 import outputs from "@/amplify_outputs.json";
 
 export const { runWithAmplifyServerContext } = createServerRunner({
-  config: outputs,
+  config: outputs ,
 });
 
 export const cookiesClient = generateServerClientUsingCookies<Schema>({

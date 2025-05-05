@@ -1,8 +1,9 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { motion, MotionProps, useScroll } from "motion/react";
+import { motion, MotionProps, useScroll, useSpring, useTransform } from "motion/react";
 import React from "react";
+
 interface ScrollProgressProps
   extends Omit<React.HTMLAttributes<HTMLElement>, keyof MotionProps> {}
 
@@ -11,6 +12,12 @@ export const ScrollProgress = React.forwardRef<
   ScrollProgressProps
 >(({ className, ...props }, ref) => {
   const { scrollYProgress } = useScroll();
+  
+  // Clamp the scroll progress between 0 and 1 and add smooth spring animation
+  const smoothProgress = useSpring(
+    useTransform(scrollYProgress, [0, 1], [0, 1], { clamp: true }),
+    { stiffness: 300, damping: 30, restDelta: 0.001 }
+  );
 
   return (
     <motion.div
@@ -20,7 +27,7 @@ export const ScrollProgress = React.forwardRef<
         className,
       )}
       style={{
-        scaleX: scrollYProgress,
+        scaleX: smoothProgress,
       }}
       {...props}
     />

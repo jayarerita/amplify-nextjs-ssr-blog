@@ -2,7 +2,6 @@ import Image from 'next/image';
 import { getUrl } from '@aws-amplify/storage/server';
 import { runWithAmplifyServerContext } from '@/lib/utils/amplify-utils';
 
-
 const getImageUrl = async (imageKey: string) => {
   try {
     const imageUrl = await runWithAmplifyServerContext({
@@ -21,12 +20,20 @@ const getImageUrl = async (imageKey: string) => {
 
 export default async function CoverImage({ imageKey, altText }: { imageKey: string, altText: string }) {
   const imageUrl = await getImageUrl(imageKey);
+  
   if (!imageUrl) {
     return <p>Something went wrong...</p>;
   }
-  const image = await fetch(imageUrl).then(res => res.text());
 
-  return <Image src={image} alt={altText} />
+  return (
+    <div className="relative w-full h-auto overflow-hidden">
+      <img 
+        src={imageUrl} 
+        alt={altText} 
+        className="w-full h-auto"
+      />
+    </div>
+  );
 }
 
 

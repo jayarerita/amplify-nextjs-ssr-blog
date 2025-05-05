@@ -1,5 +1,7 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { postConfirmation } from "../auth/post-confirmation/resource";
+import { demoData } from "../functions/demoData/resource";
+import { deleteDemoData } from "../functions/deleteDemoData/resource";
 
 /*== STEP 1 ===============================================================
 The section below creates a Todo database table with a "content" field. Try
@@ -13,6 +15,7 @@ const schema = a.schema({
     title: a.string().required(),
     excerpt: a.string(),
     coverImageKey: a.string(),
+    thumbnailImageKey: a.string(),
     published: a.boolean(),
     publishedAt: a.datetime(),
     tags: a.string().array(),
@@ -30,9 +33,8 @@ const schema = a.schema({
     language: a.string(),
   }).authorization(allow => [
     allow.owner().to(['read', 'update', 'delete']),
-    allow.authenticated().to(['create', 'read']),
+    allow.authenticated("identityPool").to(['create', 'read']),
     allow.guest().to(['read']),
-    allow.publicApiKey().to(['read']),
   ]).identifier(['slug']),
 
   UserProfile: a.model({
@@ -46,10 +48,26 @@ const schema = a.schema({
     profileOwner: a.string().required()
   }).authorization(allow => [
     allow.owner().to(['read', 'update']),
+    allow.authenticated("identityPool").to(['read']),
     allow.guest().to(['read']),
-  ])
+  ]),
+
+  demoData: a
+    .query()
+    .arguments({
+      count: a.integer(),
+    })
+    .returns(a.json())
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(demoData)),
+
+  deleteDemoData: a
+    .query()
+    .returns(a.json())
+    .authorization(allow => [allow.authenticated()])
+    .handler(a.handler.function(deleteDemoData))
 })
-.authorization((allow) => [allow.resource(postConfirmation)]);
+.authorization((allow) => [allow.resource(postConfirmation), allow.resource(demoData), allow.resource(deleteDemoData)]);
 
 export type Schema = ClientSchema<typeof schema>;
 

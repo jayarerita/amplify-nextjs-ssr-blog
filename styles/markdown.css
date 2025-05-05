@@ -1,0 +1,126 @@
+@layer base {
+  /* Typography Headings */
+  .markdown h1 {
+    scroll-margin-top: 5rem; /* scroll-m-20 */
+    font-size: var(--text-4xl); /* text-4xl */
+    line-height: var(--text-4xl); /* text-4xl */
+    font-weight: var(--font-weight-extrabold); /* font-extrabold */
+    letter-spacing: var(--tracking-tight); /* tracking-tight */
+  }
+
+  @media (min-width: 1024px) {
+    .markdown h1 {
+      font-size: var(--text-5xl); /* lg:text-5xl */
+      line-height: var(--text-5xl); /* lg:text-5xl */
+    }
+  }
+
+  .markdown h2 {
+    margin-top: 5rem; /* mt-10 */
+    scroll-margin-top: 5rem; /* scroll-m-20 */
+    border-bottom-width: 1px; /* border-b */
+    padding-bottom: 0.5rem; /* pb-2 */
+    font-size: var(--text-3xl); /* text-3xl */
+    line-height: var(--text-3xl); /* text-3xl */
+    font-weight: var(--font-weight-semibold); /* font-semibold */
+    letter-spacing: var(--tracking-tight); /* tracking-tight */
+    transition-property: color; /* transition-colors */
+  }
+
+  .markdown h2:first-child {
+    margin-top: 0; /* first:mt-0 */
+  }
+
+  .markdown h3 {
+    margin-top: 2rem; /* mt-8 */
+    scroll-margin-top: 5rem; /* scroll-m-20 */
+    font-size: var(--text-2xl); /* text-2xl */
+    line-height: var(--text-2xl); /* text-2xl */
+    font-weight: var(--font-weight-semibold); /* font-semibold */
+    letter-spacing: var(--tracking-tight); /* tracking-tight */
+  }
+
+  /* Paragraph styles */
+  .markdown p {
+    line-height: var(--leading-relaxed); /* leading-7 */
+  }
+
+  .markdown p:not(:first-child) {
+    margin-top: 1.5rem; /* [&:not(:first-child)]:mt-6 */
+  }
+
+  /* Links */
+  .markdown a {
+    font-weight: var(--font-weight-medium); /* font-medium */
+    color: var(--primary); /* text-primary */
+    text-decoration-line: underline; /* underline */
+    text-underline-offset: 4px; /* underline-offset-4 */
+  }
+
+  /* Blockquote */
+  .markdown blockquote {
+    margin-top: 1.5rem; /* mt-6 */
+    border-left-width: 2px; /* border-l-2 */
+    padding-left: 1.5rem; /* pl-6 */
+    font-style: italic; /* italic */
+  }
+
+  /* Lists */
+  .markdown ul {
+    margin-top: 1.5rem; /* my-6 (top part) */
+    margin-bottom: 1.5rem; /* my-6 (bottom part) */
+    margin-left: 1.5rem; /* ml-6 */
+    list-style-type: disc; /* list-disc */
+  }
+
+  .markdown ul > li {
+    margin-top: 0.5rem; /* [&>li]:mt-2 */
+  }
+
+  /* Tables */
+  .markdown table {
+    width: var(--percentage-100); /* w-full */
+  }
+
+  .markdown .table-container {
+    margin-top: 1.5rem; /* my-6 (top part) */
+    margin-bottom: 1.5rem; /* my-6 (bottom part) */
+    width: var(--percentage-100); /* w-full */
+    overflow-y: auto; /* overflow-y-auto */
+  }
+
+  .markdown thead tr,
+  .markdown tbody tr {
+    margin: 0; /* m-0 */
+    border-top-width: 1px; /* border-t */
+    padding: 0; /* p-0 */
+  }
+
+  .markdown tr:nth-child(even) {
+    background-color: var(--color-muted); /* even:bg-muted */
+  }
+
+  .markdown th,
+  .markdown td {
+    border-width: 1px; /* border */
+    padding-left: 1rem; /* px-4 (left part) */
+    padding-right: 1rem; /* px-4 (right part) */
+    padding-top: 0.5rem; /* py-2 (top part) */
+    padding-bottom: 0.5rem; /* py-2 (bottom part) */
+    text-align: left; /* text-left */
+  }
+
+  .markdown th {
+    font-weight: 700; /* font-bold */
+  }
+
+  .markdown th[align="center"],
+  .markdown td[align="center"] {
+    text-align: center; /* [&[align=center]]:text-center */
+  }
+
+  .markdown th[align="right"],
+  .markdown td[align="right"] {
+    text-align: right; /* [&[align=right]]:text-right */
+  }
+} 

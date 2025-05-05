@@ -18,41 +18,42 @@ import {
 } from "@/components/ui/navigation-menu"
 import { ModeToggle } from "@/components/ThemeToggle"
 import { Button } from "@/components/ui/button"
-const components: { title: string; href: string; description: string }[] = [
+
+const hotTopics: { title: string; href: string; description: string }[] = [
   {
-    title: "Alert Dialog",
-    href: "/docs/primitives/alert-dialog",
+    title: "AWS Amplify",
+    href: "/posts/topic/aws-amplify",
     description:
-      "A modal dialog that interrupts the user with important content and expects a response.",
+      "AWS Amplify is a development platform for building secure, scalable mobile and web applications.",
   },
   {
-    title: "Hover Card",
-    href: "/docs/primitives/hover-card",
+    title: "AI Agents",
+    href: "/posts/topic/ai-agents",
     description:
-      "For sighted users to preview content available behind a link.",
+      "AI Agents are a new way to build applications. They are a collection of tools and services that can be used to build applications.",
   },
   {
-    title: "Progress",
-    href: "/docs/primitives/progress",
+    title: "Next JS",
+    href: "/posts/topic/next-js",
     description:
-      "Displays an indicator showing the completion progress of a task, typically displayed as a progress bar.",
+      "Next JS is a React framework for building server-side rendered (SSR) web applications.",
   },
   {
-    title: "Scroll-area",
-    href: "/docs/primitives/scroll-area",
-    description: "Visually or semantically separates content.",
+    title: "React",
+    href: "/posts/topic/react",
+    description: "React is a JavaScript library for building user interfaces.",
   },
   {
-    title: "Tabs",
-    href: "/docs/primitives/tabs",
+    title: "AWS Lambda",
+    href: "/posts/topic/aws-lambda",
     description:
-      "A set of layered sections of content—known as tab panels—that are displayed one at a time.",
+      "AWS Lambda is a compute service that lets you run code without provisioning or managing servers.",
   },
   {
-    title: "Tooltip",
-    href: "/docs/primitives/tooltip",
+    title: "AWS DynamoDB",
+    href: "/posts/topic/aws-dynamodb",
     description:
-      "A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it.",
+      "AWS DynamoDB is a fast, flexible, and fully managed NoSQL database service that supports key-value and document data structures.",
   },
 ]
 
@@ -62,12 +63,13 @@ export function NavBar() {
           
   return (
     <div className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center w-full max-w-3xl mx-auto p-4 relative">
+      {/* Desktop Navigation */}
+      <div className="hidden md:flex items-center w-full max-w-3xl mx-auto p-4 relative">
         <span className="flex items-center w-max mx-auto">
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Getting started</NavigationMenuTrigger>
+                <NavigationMenuTrigger>About Me</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
                     <li className="row-span-3">
@@ -78,48 +80,41 @@ export function NavBar() {
                         >
                           {/* TODO Logo here */}
                           <div className="mb-2 mt-4 text-lg font-medium">
-                            shadcn/ui
+                            Jake Rita
                           </div>
                           <p className="text-sm leading-tight text-muted-foreground">
-                            Beautifully designed components that you can copy and
-                            paste into your apps. Accessible. Customizable. Open
-                            Source.
+                            Incredibly handsome and talented software engineer. Ready to build <del>your</del> my next big idea.
                           </p>
                         </a>
                       </NavigationMenuLink>
                     </li>
-                    <ListItem href="/docs" title="Introduction">
-                      Re-usable components built using Radix UI and Tailwind CSS.
+                    <ListItem href="/about" title="Introduction">
+                     Learn more about me.
                     </ListItem>
-                    <ListItem href="/docs/installation" title="Installation">
-                      How to install dependencies and structure your app.
+                    <ListItem href="/socials" title="Socials">
+                      Find me on social media.
                     </ListItem>
-                    <ListItem href="/docs/primitives/typography" title="Typography">
-                      Styles for headings, paragraphs, lists...etc
+                    <ListItem href="/contact" title="Contact">
+                      Get in touch.
                     </ListItem>
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Components</NavigationMenuTrigger>
+                <NavigationMenuTrigger>Hot Topics</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
-                    {components.map((component) => (
+                    {hotTopics.map((topic) => (
                       <ListItem
-                        key={component.title}
-                        title={component.title}
-                        href={component.href}
+                        key={topic.title}
+                        title={topic.title}
+                        href={topic.href}
                       >
-                        {component.description}
+                        {topic.description}
                       </ListItem>
                     ))}
                   </ul>
                 </NavigationMenuContent>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()} href='/docs'>
-                    Documentation
-                  </NavigationMenuLink>
               </NavigationMenuItem>
               {user && (
               <NavigationMenuItem>
@@ -140,6 +135,14 @@ export function NavBar() {
                       >
                         New Post
                       </ListItem>
+                      {/* Users */}
+                      <ListItem
+                        key="Users"
+                        title="Users"
+                        href="/admin/users"
+                      >
+                        Users
+                      </ListItem>
                       {/* Sign Out Button */}
                       <ListItem
                         key="Sign Out"
@@ -159,15 +162,15 @@ export function NavBar() {
           </NavigationMenu>
         </span>
         <div className="absolute right-0">
-            <ModeToggle />
-          </div>
-          <div className="absolute left-0">
-            <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
-              <Home />
-            </Button>
-          </div>
+          <ModeToggle />
+        </div>
+        <div className="absolute left-0">
+          <Button variant="ghost" size="icon" onClick={() => router.push('/')}>
+            <Home />
+          </Button>
+        </div>
       </div>
-      <ScrollProgress className="bottom-0 top-auto" />
+      <ScrollProgress className="bottom-0 top-auto -z-10" />
     </div>
   )
 }
