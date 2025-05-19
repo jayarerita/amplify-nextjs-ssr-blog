@@ -1,20 +1,20 @@
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { MagicCard } from '@/components/magicui/magic-card';
-import { Badge } from '@/components/ui/badge';
-import {BlogPostImage} from './BlogPostImage';
+import {PostImage} from './PostImage';
 import { Schema } from '@/amplify/data/resource';
 import { useGetUserProfile } from '@/lib/hooks/use-get-user-profile';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { Button } from '@/components/ui/button';
 import { Edit } from 'lucide-react';
-import { BlogPostCardAuthor } from './BlogPostAuthor';
+import { PostCardAuthor } from './PostCardAuthor';
+import { PostTags } from './PostTags';
 
 
-export function BlogCard({
+export function PostCard({
   post,
 }: {
-  post: Schema["BlogPost"]["type"],
+  post: Schema["Post"]["type"],
 }) {
   const { user, route } = useAuthenticator((context) => [context.user, context.route]);
   const { data: userProfile } = useGetUserProfile(user?.userId || '');
@@ -26,7 +26,7 @@ export function BlogCard({
     (user.userId === post.owner || userProfile?.role === 'admin');
 
   return (
-    <MagicCard className="group block overflow-hidden rounded-lg bg-background hover:shadow-lg transition-all duration-200 relative h-[32rem] cursor-pointer">
+    <MagicCard className="group block overflow-hidden rounded-lg bg-background hover:shadow-lg transition-all duration-200 relative md:h-[32rem] cursor-pointer">
       <Link 
         href={`/posts/${post.slug}`}
         className="block"
@@ -36,7 +36,7 @@ export function BlogCard({
           <div className="aspect-[16/9] overflow-hidden border border-transparent rounded-t-lg">
                 <div className="relative w-full h-full overflow-hidden">
 
-            <BlogPostImage imageKey={post.coverImageKey} alt={post.coverImageAlt || post.title} className="w-full h-full object-cover" />
+            <PostImage imageKey={post.coverImageKey} alt={post.coverImageAlt || post.title} className="w-full h-full object-cover" />
           </div>
           </div>
         )}
@@ -47,22 +47,10 @@ export function BlogCard({
               {formatDate(post.publishedAt)}
             </time>
             )}
-            {post.tags && post.tags.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
-                {post.tags.map((tag) => (
-                  <Badge 
-                    key={tag} 
-                    variant={tag === '__demo__' ? 'secondary' : 'outline'}
-                    className="text-xs"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
+            <PostTags post={post} />
           </div>
 
-          <BlogPostCardAuthor authorId={post.owner} />
+          <PostCardAuthor authorId={post.owner} />
           
           <h3 className="mt-3 text-xl font-semibold leading-tight text-foreground">
             {post.title}
@@ -78,7 +66,7 @@ export function BlogCard({
       {/* Edit button - only visible for authenticated users who are the author or admin */}
       {canEdit && (
         <Link 
-          href={`/admin/posts/edit/${post.slug}`}
+          href={`/admin/blog/edit/${post.slug}`}
           className="absolute top-4 right-4 z-10"
           onClick={(e) => e.stopPropagation()}
         >

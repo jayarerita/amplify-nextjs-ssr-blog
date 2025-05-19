@@ -1,10 +1,10 @@
 'use client';
 
-import { Skeleton } from "./ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useGetUserProfile } from "@/lib/hooks/use-get-user-profile";
 
-export const BlogPostCardAuthor = ({ authorId }: { authorId: string }) => {
+export const PostCardAuthor = ({ authorId }: { authorId: string }) => {
   const { data: userProfile, isLoading: isUserProfileLoading } = useGetUserProfile(authorId);
 
   if (isUserProfileLoading) {

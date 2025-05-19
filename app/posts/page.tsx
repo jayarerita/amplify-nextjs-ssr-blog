@@ -1,11 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useDebounce } from '@/lib/hooks/use-debounce';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { NewsletterCard } from '../components/NewsletterCard';
+import { NewsletterCard } from '@/features/newsletter/components/NewsletterCard';
 
 
 

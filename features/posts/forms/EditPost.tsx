@@ -1,6 +1,7 @@
 'use client';
 
-import { useCreateBlogPost } from '@/lib/hooks/use-create-blog-post';
+import { useUpdatePost } from '@/features/posts/database/use-update-post';
+import { useGetMarkdown } from '@/lib/hooks/use-get-markdown';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -9,24 +10,39 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, Info, X } from 'lucide-react';
+import { AlertCircle, Info, X, Copy, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuthenticator } from '@aws-amplify/ui-react';
-import MDEditor from '@uiw/react-md-editor';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from "next-themes";
 import { uploadData } from 'aws-amplify/storage';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Skeleton } from '@/components/ui/skeleton';
+import { type Schema } from "@/amplify/data/resource";
+import { Switch } from '@/components/ui/switch';
 import rehypeSanitize from 'rehype-sanitize';
+import { ImagePreview } from '../../../components/ImagePreview';
+import ReactMarkdown from 'react-markdown';
+import { CodeBlock } from '@/components/MarkdownCodeBlock';
+import { useCreatePost } from '@/features/posts/database/use-create-post';
+import { useCreatePostTag } from '@/features/posts/database/use-create-post-tag';
+import { useCreateTag } from '@/features/posts/database/use-create-tag';
+import { TagSelector } from './TagSelector';
+import { FormTag } from '@/features/posts/types/types';
 
+const tagSchema = z.object({
+  name: z.string().min(1, 'Tag name is required'),
+  isNew: z.boolean().optional(),
+  id: z.string().optional(),
+});
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title is too long'),
   excerpt: z.string().max(200, 'Excerpt is too long').optional(),
   published: z.boolean(),
   slug: z.string().min(1, 'Slug is required').max(100, 'Slug is too long'),
-  tags: z.array(z.string()).min(1, 'At least one tag is required'),
+  tags: z.array(tagSchema).min(1, 'At least one tag is required'),
   // SEO and metadata fields
   metaTitle: z.string().max(60, 'Meta title should be under 60 characters').optional(),
   metaDescription: z.string().max(160, 'Meta description should be under 160 characters').optional(),
@@ -40,83 +56,116 @@ const formSchema = z.object({
   imageFile: z.instanceof(File).optional(),
 });
 
+interface PostFormProps {
+  post?: Schema["Post"]["type"];
+  mode: 'create' | 'edit';
+}
 
-export function CreateBlogPostForm() {
+export function PostForm({ post, mode }: PostFormProps) {
   const { theme } = useTheme();
   const { user } = useAuthenticator((context) => [context.user]);
   const router = useRouter();
-  const { mutate: createPost, isPending, error } = useCreateBlogPost();
-  const [markdown, setMarkdown] = useState('Hello world');
+  const { mutate: updatePost, isPending: isUpdatePending, error: updateError } = useUpdatePost();
+  const { mutate: createPost, isPending: isCreatePending, error: createError } = useCreatePost();
+  const { mutateAsync: createTag } = useCreateTag();
   const [isUploading, setIsUploading] = useState(false);
   const [hasImageFile, setHasImageFile] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<{ name: string; isNew: boolean; id?: string }[]>([]);
+  
+  // Fetch markdown content for edit mode
+  const { data: markdownContent, isLoading: isLoadingMarkdown } = useGetMarkdown(post?.markdownKey ?? '', {
+    enabled: mode === 'edit' && !!post?.markdownKey
+  });
+  const [markdown, setMarkdown] = useState<string>(mode === 'create' ? '' : '');
+
+  // Set markdown content when loaded in edit mode
+  useEffect(() => {
+    if (markdownContent && mode === 'edit') {
+      setMarkdown(markdownContent);
+    }
+  }, [markdownContent, mode]);
 
   const resizeImage = async (image: File, width: number, height: number) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
     img.src = URL.createObjectURL(image);
-    canvas.width = width;
-    canvas.height = height;
-    ctx?.drawImage(img, 0, 0, width, height);
-    return canvas.toDataURL('image/jpeg');
+    
+    return new Promise<string>((resolve) => {
+      img.onload = () => {
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg'));
+      };
+    });
   }
 
   const form = useForm({
     defaultValues: {
-      title: '',
-      excerpt: '',
-      published: false,
-      slug: '',
-      tags: [] as string[],
-      metaTitle: '',
-      metaDescription: '',
-      canonicalUrl: '',
-      ogImage: '',
-      ogImageAlt: '',
-      noIndex: false,
-      language: 'en',
-      coverImageKey: '',
-      coverImageAlt: '',
+      title: post?.title || '',
+      excerpt: post?.excerpt || '',
+      published: post?.published || false,
+      slug: post?.slug || '',
+      tags: post?.tags || [] as FormTag[],
+      metaTitle: post?.metaTitle || '',
+      metaDescription: post?.metaDescription || '',
+      canonicalUrl: post?.canonicalUrl || '',
+      ogImage: post?.ogImage || '',
+      ogImageAlt: post?.ogImageAlt || '',
+      noIndex: post?.noIndex || false,
+      language: post?.language || 'en',
+      coverImageKey: post?.coverImageKey || '',
+      coverImageAlt: post?.coverImageAlt || '',
       imageFile: undefined as unknown as File | null,
     },
     onSubmit: async (form) => {
       try {
         setIsUploading(true);
-        const publishedAt = form.value.published ? new Date().toISOString() : null;
+        const publishedAt = form.value.published 
+          ? (mode === 'edit' ? post?.publishedAt : new Date().toISOString())
+          : (mode === 'edit' ? post?.publishedAt : null);
 
         if (!user) {
           throw new Error('User not found');
         }
 
-        // Upload markdown file first
-        const markdownKey = `markdown/${form.value.slug}.md`;
-        try {
-          await uploadData({
-            path: markdownKey,
-            data: markdown,
-            options: {
-              contentType: 'text/markdown',
-              onProgress: ({ transferredBytes, totalBytes }) => {
-                if (totalBytes) {
-                  console.log(
-                    `Upload progress ${Math.round(
-                      (transferredBytes / totalBytes) * 100
-                    )} %`
-                  );
-                }
+        // Upload markdown file if content changed or in create mode
+        let markdownKey = post?.markdownKey;
+        if (markdown !== markdownContent || mode === 'create') {
+          markdownKey = `markdown/${form.value.slug}.md`;
+          try {
+            await uploadData({
+              path: markdownKey,
+              data: markdown,
+              options: {
+                contentType: 'text/markdown',
+                onProgress: ({ transferredBytes, totalBytes }) => {
+                  if (totalBytes) {
+                    console.log(
+                      `Upload progress ${Math.round(
+                        (transferredBytes / totalBytes) * 100
+                      )} %`
+                    );
+                  }
+                },
               },
-            },
-          }).result;
-        } catch (error) {
-          toast.error('Error uploading markdown file: ' + (error as Error).message);
-          return;
+            }).result;
+          } catch (error) {
+            toast.error('Error uploading markdown file: ' + (error as Error).message);
+            return;
+          }
         }
 
-        // Upload image file next
-        let imageKey = null;
+        // Upload image file if provided
+        let coverImageKey = form.value.coverImageKey;
+        let ogImage = form.value.ogImage;
+        
         if (form.value.imageFile) {
-          imageKey = `${form.value.slug}.${form.value.imageFile.type.split('/')[1]}`;
-          const coverImageKey = 'covers/' + imageKey;
+          console.log("Uploading image file");
+          const imageKey = `${form.value.slug}.${form.value.imageFile.type.split('/')[1]}`;
+          coverImageKey = 'covers/' + imageKey;
+          
           try {
             await uploadData({
               path: coverImageKey,
@@ -130,11 +179,10 @@ export function CreateBlogPostForm() {
             return;
           }
 
-          form.value.coverImageKey = coverImageKey;
-
-          // Resize image to 1200x630
+          // Resize image to 1200x630 for social sharing
           const thumbnailImageKey = `thumbnails/${imageKey}`;
           const thumbnailImage = await resizeImage(form.value.imageFile, 1200, 630);
+          
           try {
             await uploadData({
               path: thumbnailImageKey,
@@ -147,53 +195,127 @@ export function CreateBlogPostForm() {
             toast.error('Error uploading thumbnail image file: ' + (error as Error).message);
             return;
           }
-          form.value.ogImage = thumbnailImageKey;
+          
+          ogImage = thumbnailImageKey;
         }
 
-        // Create blog post with all fields
-        createPost({
+        // --- TAG LOGIC ---
+        // 1. Create new tags if needed
+        const tagIds: string[] = [];
+        for (const tag of selectedTags) {
+          if (tag.isNew) {
+            try {
+              const result = await createTag({ name: tag.name });
+              if (result?.data?.id) {
+                tagIds.push(result.data.id);
+              }
+            } catch (err) {
+              toast.error('Failed to create tag: ' + tag.name);
+            }
+          } else if (tag.id) {
+            tagIds.push(tag.id);
+          }
+        }
+
+        // 2. Prepare postData (remove tags field)
+        const postData = {
           title: form.value.title,
           published: form.value.published,
           excerpt: form.value.excerpt,
           slug: form.value.slug,
-          tags: form.value.tags,
-          publishedAt: publishedAt,
-          owner: user.userId,
-          markdownKey: markdownKey,
-          metaTitle: form.value.metaTitle || form.value.title, // Fall back to regular title
-          metaDescription: form.value.metaDescription || form.value.excerpt, // Fall back to excerpt
+          publishedAt,
+          markdownKey,
+          metaTitle: form.value.metaTitle || form.value.title,
+          metaDescription: form.value.metaDescription || form.value.excerpt,
           canonicalUrl: form.value.canonicalUrl,
-          ogImage: form.value.ogImage,
+          ogImage,
           ogImageAlt: form.value.ogImageAlt,
           noIndex: form.value.noIndex,
           language: form.value.language,
-          coverImageKey: form.value.coverImageKey,
+          coverImageKey,
           coverImageAlt: form.value.coverImageAlt,
-          readingTime: Math.ceil(markdown.split(/\s+/).length / 200), // Rough estimate of reading time
-        }, {
-          onSuccess: () => {
-            toast.success('Blog post created successfully');
-            router.push('/admin');
-          },
-          onError: (error) => {
-            toast.error('Error creating blog post: ' + error.message);
-          },
-        });
+          readingTime: Math.ceil(markdown.split(/\s+/).length / 200),
+        };
+
+        // 3. Create or update the blog post
+        let postId: string | undefined = post?.id;
+        if (mode === 'edit') {
+          updatePost({
+            id: post!.id,
+            input: postData
+          }, {
+            onSuccess: async (updated) => {
+              // 4. Create BlogTag relations
+              postId = updated?.data?.id || post?.id;
+              if (postId) {
+                const { mutateAsync: createPostTag } = useCreatePostTag();
+                for (const tagId of tagIds) {
+                  try {
+                    await createPostTag({ tagId, postId });
+                  } catch (err) {
+                    // Ignore if already exists
+                  }
+                }
+              }
+              toast.success('Blog post updated successfully');
+              router.push('/admin');
+            },
+            onError: (error) => {
+              toast.error('Error updating blog post: ' + error.message);
+            },
+          });
+        } else {
+          createPost({
+            ...postData,
+            owner: user.userId,
+          }, {
+            onSuccess: async (created) => {
+              postId = created?.data?.id;
+              if (postId) {
+                const { mutateAsync: createPostTag } = useCreatePostTag();
+                for (const tagId of tagIds) {
+                  try {
+                    await createPostTag({ tagId, postId });
+                  } catch (err) {
+                    // Ignore if already exists
+                  }
+                }
+              }
+              toast.success('Blog post created successfully');
+              router.push('/admin');
+            },
+            onError: (error) => {
+              toast.error('Error creating blog post: ' + error.message);
+            },
+          });
+        }
       } catch (error) {
-        toast.error('Error uploading markdown: ' + (error as Error).message);
+        toast.error(`Error ${mode === 'edit' ? 'updating' : 'creating'} blog post: ` + (error as Error).message);
       } finally {
         setIsUploading(false);
       }
     },
   });
 
-  // Optional: Construct a slug from the title and update the slug field
+  // Construct a slug from the title
   const constructSlugFromTitle = () => {
     const title = form.getFieldValue('title');
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    console.log(slug);
-    return slug;
+    return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   };
+  
+  if (mode === 'edit' && isLoadingMarkdown) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
+  const isPending = mode === 'edit' ? isUpdatePending : isCreatePending;
+  const error = mode === 'edit' ? updateError : createError;
 
   return (
     <form
@@ -202,7 +324,7 @@ export function CreateBlogPostForm() {
         e.stopPropagation();
         void form.handleSubmit();
       }}
-      className="flex flex-col space-y-6"
+      className="flex flex-col space-y-6 mb-8"
     >
       <form.Field
         name="title"
@@ -326,42 +448,26 @@ export function CreateBlogPostForm() {
       </form.Field>
       <form.Field
         name="tags"
-        mode="array"
-        >
+        validators={{
+          onChange: ({ value }) => {
+            // Validate at least one tag
+            if (!value || value.length === 0) return 'At least one tag is required';
+            return undefined;
+          },
+        }}
+      >
         {(field) => (
-            <div className="space-y-2">
+          <div className="space-y-2">
             <Label className="mr-2">Tags</Label>
-            {field.state.value.map((_, index) => (
-              <div key={index} className="flex gap-2 my-2">
-                <form.Field
-                  name={`tags[${index}]`}
-                  children={(subField) => (
-                    <Input
-                      type="text"
-                      value={subField.state.value}
-                      autoFocus
-                      onChange={(e) =>
-                        subField.handleChange(e.target.value)
-                      }
-                    />
-                  )}
-                />
-                <Button
-                  variant={"destructive"}
-                  onClick={() => field.removeValue(index)}
-                >
-                  <X />
-                </Button>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant={"outline"}
-              onClick={() => field.pushValue("")}
-            >
-              Add
-            </Button>
-            </div>
+            <TagSelector
+              selectedTags={Array.isArray(field.state.value) ? field.state.value : []}
+              setSelectedTags={field.handleChange}
+              disabled={isPending || isUploading}
+            />
+            {field.state.meta.errors ? (
+              <p className="text-sm text-red-600">{field.state.meta.errors.join(', ')}</p>
+            ) : null}
+          </div>
         )}
       </form.Field>
 
@@ -441,14 +547,28 @@ export function CreateBlogPostForm() {
           {(field) => (
             <div className="space-y-2">
               <Label htmlFor={field.name}>Canonical URL</Label>
-              <Input
-                id={field.name}
-                name={field.name}
-                value={field.state.value}
-                onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
-                placeholder="https://example.com/original-post"
-              />
+              <span className="flex flex-row gap-2">
+                <Input
+                  id={field.name}
+                  name={field.name}
+                  value={field.state.value}
+                  onBlur={field.handleBlur}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  placeholder="https://example.com/original-post"
+                />
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+                    const slug = form.getFieldValue('slug');
+                    field.handleChange(`${siteUrl}/blog/${slug}`);
+                  }}
+                >
+                  Generate URL
+                </Button>
+              </span>
               {field.state.meta.errors ? (
                 <p className="text-sm text-red-600">{field.state.meta.errors.join(', ')}</p>
               ) : null}
@@ -468,12 +588,10 @@ export function CreateBlogPostForm() {
           {(field) => (
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
+                <Switch
                   id={field.name}
                   checked={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  onCheckedChange={field.handleChange}
                 />
                 <Label htmlFor={field.name}>Hide from search engines</Label>
               </div>
@@ -528,11 +646,25 @@ export function CreateBlogPostForm() {
           {(field) => (
             <div className="space-y-2">
               <Label htmlFor={field.name}>Image File</Label>
-              <Input type="file" accept="image/*" onChange={(e) => {
-                const file = e.target.files?.[0] || null;
-                setHasImageFile(!!file);
-                field.handleChange(file);
-              }} />
+              <Input 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setHasImageFile(!!file);
+                  field.handleChange(file);
+                }} 
+              />
+              
+              <ImagePreview 
+                imageFile={field.state.value}
+                imageKey={post?.coverImageKey}
+                altText={post?.coverImageAlt}
+                onCancel={field.state.value ? () => {
+                  field.handleChange(null);
+                  setHasImageFile(false);
+                } : undefined}
+              />
             </div>
           )}
         </form.Field>
@@ -570,7 +702,7 @@ export function CreateBlogPostForm() {
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
                 placeholder="Path to cover image"
-                disabled={hasImageFile}
+                disabled={true}
               />
               {field.state.meta.errors ? (
                 <p className="text-sm text-red-600">{field.state.meta.errors.join(', ')}</p>
@@ -639,7 +771,7 @@ export function CreateBlogPostForm() {
                 onBlur={field.handleBlur}
                 onChange={(e) => field.handleChange(e.target.value)}
                 placeholder="Path to social sharing image (1200x630 recommended)"
-                disabled={hasImageFile}
+                disabled={true}
               />
               {field.state.meta.errors ? (
                 <p className="text-sm text-red-600">{field.state.meta.errors.join(', ')}</p>
@@ -674,24 +806,20 @@ export function CreateBlogPostForm() {
             </div>
           )}
         </form.Field>
-
       </div>
 
-
-
       <form.Subscribe
-            selector={(state) => state.errors}
-            children={(errors) =>
-              errors.length > 0 && (
-                <Alert variant={"destructive"}>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{JSON.stringify(errors)}</AlertDescription>
-                </Alert>
-              )
-            }
-          />
-
+        selector={(state) => state.errors}
+        children={(errors) =>
+          errors.length > 0 && (
+            <Alert variant={"destructive"}>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{JSON.stringify(errors)}</AlertDescription>
+            </Alert>
+          )
+        }
+      />
 
       {error && (
         <Alert variant={"destructive"}>
@@ -703,25 +831,46 @@ export function CreateBlogPostForm() {
 
       <h2 className="text-lg font-semibold">Content</h2>
       <div className="flex flex-col md:flex-row gap-4 w-full mt-4">
-      <Textarea
-        value={markdown}
-        onChange={(e) => setMarkdown(e.target.value)}
-        className="h-[500px] overflow-y-auto"
-      />
-      <div className="container" data-color-mode={theme} id="md-editor">
-        <MDEditor.Markdown source={markdown}           rehypePlugins={[rehypeSanitize]}
- style={{ whiteSpace: 'pre-wrap', backgroundColor: 'transparent', height: '500px', overflowY: 'auto' }} />
+        <Textarea
+          value={markdown}
+          onChange={(e) => setMarkdown(e.target.value)}
+          className="h-[500px] overflow-y-auto rounded-lg"
+        />
+        <div className="container" data-color-mode={theme} id="md-editor">
+          <div className="markdown h-[500px] overflow-y-auto border rounded-lg">
+            <ReactMarkdown
+              components={{
+                code: CodeBlock
+              }}
+              rehypePlugins={[rehypeSanitize]}
+            >
+              {markdown}
+            </ReactMarkdown>
+          </div>
+        </div>
       </div>
-      </div>
-
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-4">
+        <Button 
+          type="button" 
+          variant="outline"
+          onClick={() => router.push('/admin')}
+        >
+          Cancel
+        </Button>
         <Button
           type="submit"
           disabled={!form.state.canSubmit || isPending || isUploading}
         >
-          {isPending || isUploading ? 'Creating...' : 'Create Post'}
+          {isPending || isUploading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {mode === 'edit' ? 'Updating...' : 'Creating...'}
+            </>
+          ) : (
+            mode === 'edit' ? 'Update Post' : 'Create Post'
+          )}
         </Button>
       </div>
     </form>
   );
-}
+} 

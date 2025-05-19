@@ -3,11 +3,14 @@
 import { Button } from '@/components/ui/button';
 import { useGenerateDemoData, useDeleteDemoData } from '@/lib/hooks/use-demo-data';
 import { Loader2 } from 'lucide-react';
-import { BlogPostList } from '@/components/BlogPostListInfiniteScroll';
+import { PostListPaginated } from '@/features/posts/components/PostListPaginated';
+import { Input } from '@/components/ui/input';
+import { useState } from 'react';
 
 export default function AdminDashboard() {
   const { mutate: generateDemoData, isPending: isGenerating } = useGenerateDemoData();
   const { mutate: deleteDemoData, isPending: isDeleting } = useDeleteDemoData();
+  const [titleSearch, setTitleSearch] = useState('');
 
   return (
     <div className="max-w-7xl mx-auto py-12">
@@ -42,9 +45,8 @@ export default function AdminDashboard() {
             )}
           </Button>
         </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <BlogPostList />
+        <Input placeholder="Search" value={titleSearch} onChange={(e) => setTitleSearch(e.target.value)} className="my-4 max-w-md mx-auto" />
+        <PostListPaginated titleSearch={titleSearch} listClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" className="" />
       </div>
     </div>
   );

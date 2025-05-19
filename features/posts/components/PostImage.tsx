@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils';
 import { getUrl } from 'aws-amplify/storage';
 
-interface BlogPostImageProps extends React.HTMLAttributes<HTMLImageElement> {
+interface PostImageProps extends React.HTMLAttributes<HTMLImageElement> {
   imageKey: string;
   alt?: string | null;
   className?: string;
 }
 
-export function BlogPostImage({ imageKey, alt, className }: BlogPostImageProps) {
+export function PostImage({ imageKey, alt, className }: PostImageProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
 

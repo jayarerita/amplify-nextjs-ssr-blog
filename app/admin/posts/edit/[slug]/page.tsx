@@ -1,9 +1,9 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useGetBlogPost } from '@/lib/hooks/use-get-blog-post';
+import { useGetBlogPost } from '@/features/posts/database/use-get-post';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EditBlogPostForm } from '@/components/forms/EditBlogPost';
+import { BlogPostForm } from '@/features/posts/forms/EditPost';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,7 @@ export default function EditBlogPostPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Edit Blog Post</h1>
-      <EditBlogPostForm post={post} />
+      <BlogPostForm mode="edit" post={post} />
     </div>
   );
 } 

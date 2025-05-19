@@ -98,56 +98,100 @@ export const handler: Schema["demoData"]["functionHandler"] = async (event) => {
       throw new Error('No user profiles found');
     }
     const userProfile = userProfiles[0];
+
+    // Get or create 6 tags to use for the posts
+    const { data: tags, errors: tagErrors } = await client.models.Tag.list();
+    if (tags.length === 0) {
+      console.log('No tags found, creating 6 tags');
+      try {
+        for (let i = 0; i < 6; i++) {
+          const tag = {
+            name: faker.lorem.word(),
+            isDemo: true
+          };
+          await client.models.Tag.create(tag);
+        }
+      } catch (error) {
+        console.error('Failed to create tags:', error);
+        throw error;
+      }
+
+    }
     
     for (let i = 0; i < (count || 20); i++) {
       log(`Creating post ${i + 1} of ${count || 20}`);
       
       try {
-        const tags = Array.from({ length: faker.number.int({ min: 1, max: 5 }) }, () => faker.word.sample());
-        tags.push("__demo__");
-        
+        // Get a lsit of all tags
+        const { data: tags, errors: tagErrors } = await client.models.Tag.list();
+        if (tags.length === 0) {
+          throw new Error('No tags found');
+        }
+
+        // Get a random tag
+        const randomTag = tags[Math.floor(Math.random() * tags.length)];
+
+
+        if (!randomTag) {
+          throw new Error('No tags found');
+        }
+
+        // Create the tags array
+        const tagsArray = [ randomTag ];
+
         const slug = faker.lorem.slug();
+
+        const postId = faker.string.uuid();
         
         // Download and store images first
         log('Processing images');
-        const coverKey = await downloadAndStoreImage(slug, 'cover');
-        const thumbnailKey = await downloadAndStoreImage(slug, 'thumbnail');
+        const coverKey = await downloadAndStoreImage(postId, 'cover');
+        const thumbnailKey = await downloadAndStoreImage(postId, 'thumbnail');
 
-        const post: Schema["BlogPost"]["createType"] = {
+        const post: Schema["Post"]["createType"] = {
+          id: postId,
           slug,
           title: faker.lorem.sentence(),
           excerpt: faker.lorem.paragraph(),
           owner: userProfile.id,
           coverImageKey: coverKey,
-          markdownKey: `markdown/${slug}.md`,
+          markdownKey: `markdown/${postId}.md`,
           thumbnailImageKey: thumbnailKey,
-          tags: tags,
           published: true,
-          publishedAt: new Date().toISOString()
+          publishedAt: new Date().toISOString(),
+          isDemo: true
         };
         
-        log('Creating blog post in database:', { slug: post.slug });
-        const createdPost = await client.models.BlogPost.create(post);
+        log('Creating blog post in database:', { slug: post.slug, id: post.id });
+        const createdPost = await client.models.Post.create(post);
         
-        if (!createdPost) {
+        if (!createdPost || !createdPost.data) {
           throw new Error(`Failed to create post in database: ${post.slug}`);
         }
         
+        // Create the blog tags
+        for (const tag of tagsArray) {
+          await client.models.PostTag.create({
+            tagId: tag.id,
+            postId: createdPost.data.id
+          });
+        }
+
         postsCreated.push(post.slug);
 
         // Save markdown content
         const markdownContent = generateMarkdownContent();
-        log('Saving markdown content to S3', { key: `markdown/${post.slug}.md` });
+        log('Saving markdown content to S3', { key: `markdown/${createdPost.data.id}.md` });
         try {
           await s3Client.send(new PutObjectCommand({
             Bucket: process.env.BLOG_STORAGE_BUCKET_NAME,
-            Key: `markdown/${post.slug}.md`,
+            Key: `markdown/${createdPost.data.id}.md`,
             Body: markdownContent,
             ContentType: 'text/markdown'
           }));
         } catch (s3Error) {
           if (s3Error instanceof S3ServiceException) {
-            console.error(`S3 error saving markdown for ${post.slug}:`, {
+            console.error(`S3 error saving markdown for ${createdPost.data.id}:`, {
               code: s3Error.name,
               message: s3Error.$metadata
             });

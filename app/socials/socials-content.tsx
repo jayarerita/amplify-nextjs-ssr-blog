@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'motion/react';
-import { siX, siBluesky } from 'simple-icons';
+import { siX } from 'simple-icons';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 

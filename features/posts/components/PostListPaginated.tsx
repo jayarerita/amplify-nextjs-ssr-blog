@@ -1,12 +1,12 @@
 'use client';
 
-import { useGetBlogPostsPaginated } from "@/lib/hooks/use-get-blog-posts";
-import { BlogCard } from "./BlogCard";
+import { useGetPostsPaginated } from "@/features/posts/database/use-get-posts";
+import { PostCard } from "./PostCard";
 import { Button } from "@/components/ui/button";
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export function BlogPostListPaginated({ titleSearch, listClassName, className }: { titleSearch: string, listClassName: string, className: string }) {
+export function PostListPaginated({ titleSearch, listClassName, className }: { titleSearch: string, listClassName: string, className: string }) {
   
   const { 
     data, 
@@ -16,7 +16,7 @@ export function BlogPostListPaginated({ titleSearch, listClassName, className }:
     status, 
     error, 
     isFetching 
-  } = useGetBlogPostsPaginated({ titleSearch });
+  } = useGetPostsPaginated({ titleSearch });
 
   if (status === 'pending') return <div>Loading posts...</div>;
   if (status === 'error') return <div>Error: {error.message}</div>;
@@ -28,7 +28,7 @@ export function BlogPostListPaginated({ titleSearch, listClassName, className }:
       {data?.pages.map((page) => (
         <React.Fragment key={page.nextToken}>
           {page.data.map((post) => (
-            <BlogCard key={post.slug} post={post} />
+            <PostCard key={post.slug} post={post} />
           ))}
         </React.Fragment>
       ))}

@@ -2,8 +2,8 @@ import { notFound } from 'next/navigation';
 import { cookiesClient } from "@/lib/utils/amplify-utils";
 import RenderMarkdown from '@/components/RenderMarkdown';
 import { Metadata, ResolvingMetadata } from 'next';
-import CoverImage from '@/components/CoverImage';
-import { BlogPostCardAuthor } from '@/components/BlogPostAuthor';
+import CoverImage from '@/features/posts/components/PostCoverImage';
+import { PostCardAuthor } from '@/features/posts/components/PostCardAuthor';
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -16,16 +16,17 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug } = await params;
   
-  const { data: post, errors } = await cookiesClient.models.BlogPost.get(
-    { slug: slug },
-    { authMode: 'identityPool' }
-  );
+  const { data: posts, errors } = await cookiesClient.models.Post.listPostBySlug({
+    slug: slug,
+  });
 
-  if (errors || !post) {
+  if (errors || !posts) {
     return {
       title: 'Post Not Found',
     }
   }
+
+  const post = posts[0];
 
   const previousImages = (await parent).openGraph?.images || []
 
@@ -68,19 +69,20 @@ export async function generateMetadata(
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const { data: post, errors } = await cookiesClient.models.BlogPost.get(
-    { slug: slug },
-    { authMode: 'identityPool' }
-  );
+  const { data: posts, errors } = await cookiesClient.models.Post.listPostBySlug({
+    slug: slug,
+  });
 
   if (errors) {
     console.error('Error fetching blog post:', errors);
     notFound();
   }
 
-  if (!post) {
+  if (!posts) {
     notFound();
   }
+
+  const post = posts[0];
 
   return (
     <main className="min-h-screen p-8 max-w-4xl mx-auto post">
@@ -88,7 +90,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
         <CoverImage imageKey={post.coverImageKey} altText={post.coverImageAlt ?? post.title}/>
       )}
       <h1 className="mb-4">{post.title}</h1>
-      <BlogPostCardAuthor authorId={post.owner} />
+      <PostCardAuthor authorId={post.owner} />
       <p className="text-muted-foreground">
         Published on {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString() : ''}
       </p>

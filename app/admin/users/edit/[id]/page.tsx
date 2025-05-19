@@ -1,6 +1,6 @@
 'use client';
 
-import { EditUserForm } from '@/components/forms/EditUserForm';
+import { EditUserForm } from '@/features/users/forms/EditUserForm';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';

@@ -2,15 +2,24 @@ import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { postConfirmation } from "../auth/post-confirmation/resource";
 import { demoData } from "../functions/demoData/resource";
 import { deleteDemoData } from "../functions/deleteDemoData/resource";
+import { preSignUp } from "../auth/pre-signup/resource";
 
-/*== STEP 1 ===============================================================
-The section below creates a Todo database table with a "content" field. Try
-adding a new "isDone" field as a boolean. The authorization rule below
-specifies that any user authenticated via an API key can "create", "read",
-"update", and "delete" any "Todo" records.
-=========================================================================*/
 const schema = a.schema({
-  BlogPost: a.model({
+
+  PostTag: a.model({
+    tagId: a.id().required(),
+    postId: a.id().required(),
+    tag: a.belongsTo('Tag', 'tagId'),
+    post: a.belongsTo('Post', 'postId'),
+    isDemo: a.boolean(),
+  }).authorization(allow => [
+    allow.authenticated("identityPool").to(['create', 'read', 'update', 'delete']),
+    allow.guest().to(['read']),
+  ]).secondaryIndexes((index) => [
+    index("tagId"), index("postId"),
+  ]),
+
+  Post: a.model({
     slug: a.string().required(),
     title: a.string().required(),
     excerpt: a.string(),
@@ -18,7 +27,7 @@ const schema = a.schema({
     thumbnailImageKey: a.string(),
     published: a.boolean(),
     publishedAt: a.datetime(),
-    tags: a.string().array(),
+    tags: a.hasMany("PostTag", "postId"),
     owner: a.string().required(),
     markdownKey: a.string(),
     coverImageAlt: a.string(),
@@ -31,11 +40,21 @@ const schema = a.schema({
     structuredData: a.json(),
     readingTime: a.integer(),
     language: a.string(),
+    isDemo: a.boolean(),
   }).authorization(allow => [
     allow.owner().to(['read', 'update', 'delete']),
     allow.authenticated("identityPool").to(['create', 'read']),
     allow.guest().to(['read']),
-  ]).identifier(['slug']),
+  ]).secondaryIndexes((index) => [index("slug")]),
+
+  Tag: a.model({
+    name: a.string().required(),
+    posts: a.hasMany("PostTag", "tagId"),
+    isDemo: a.boolean(),
+  }).authorization(allow => [
+    allow.authenticated("identityPool").to(['create', 'read', 'update', 'delete']),
+    allow.guest().to(['read']),
+  ]).secondaryIndexes((index) => [index("name")]),
 
   UserProfile: a.model({
     id: a.id().required(),
@@ -58,16 +77,21 @@ const schema = a.schema({
       count: a.integer(),
     })
     .returns(a.json())
-    .authorization(allow => [allow.authenticated()])
+    .authorization(allow => [allow.authenticated("identityPool")])
     .handler(a.handler.function(demoData)),
 
   deleteDemoData: a
     .query()
     .returns(a.json())
-    .authorization(allow => [allow.authenticated()])
+    .authorization(allow => [allow.authenticated("identityPool")])
     .handler(a.handler.function(deleteDemoData))
 })
-.authorization((allow) => [allow.resource(postConfirmation), allow.resource(demoData), allow.resource(deleteDemoData)]);
+.authorization((allow) => [
+  allow.resource(postConfirmation),
+  allow.resource(demoData),
+  allow.resource(deleteDemoData),
+  allow.resource(preSignUp)
+]);
 
 export type Schema = ClientSchema<typeof schema>;
 

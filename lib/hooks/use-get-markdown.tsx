@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getUrl } from 'aws-amplify/storage';
 import { toast } from 'sonner';
 
-export function useGetMarkdown(markdownKey: string | undefined) {
+export function useGetMarkdown(markdownKey: string | undefined, { enabled }: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['markdown', markdownKey],
     queryFn: async () => {
@@ -31,6 +31,6 @@ export function useGetMarkdown(markdownKey: string | undefined) {
         throw new Error('Failed to fetch markdown content');
       }
     },
-    enabled: !!markdownKey,
+    enabled: !!markdownKey && enabled,
   });
 } 

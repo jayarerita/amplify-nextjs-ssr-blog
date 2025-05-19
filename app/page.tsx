@@ -1,5 +1,5 @@
 import { AuroraText } from '@/components/magicui/aurora-text';
-import { SearchBlogPostsPaginated } from '@/components/SearchBlogPostsPaginated';
+import { SearchBlogPostsPaginated } from '@/features/posts/components/SearchBlogPostsPaginated';
 import { ParticlesBackground } from '@/ParticlesBackground';
 
 export default async function Home() {

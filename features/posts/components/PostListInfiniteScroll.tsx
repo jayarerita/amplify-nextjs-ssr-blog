@@ -1,16 +1,16 @@
 "use client";
 
-import { useGetBlogPostsInfinite } from '@/lib/hooks/use-get-blog-posts';
+import { useGetPostsInfinite } from '@/features/posts/database/use-get-posts';
 import React, { useEffect, useRef } from 'react';
-import { BlogCard } from './BlogCard';
-import { Skeleton } from './ui/skeleton';
-import { Card } from './ui/card';
+import { PostCard } from './PostCard';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card } from '@/components/ui/card';
 import { CircleSlash } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 
-export function BlogPostListInfiniteScroll() {
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status, error, isFetching } = useGetBlogPostsInfinite();
+export function PostListInfiniteScroll() {
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status, error, isFetching } = useGetPostsInfinite();
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -46,7 +46,7 @@ export function BlogPostListInfiniteScroll() {
       {data.pages.map((group, i) => (
         <React.Fragment key={i}>
           {group.data.map((post) => (
-            <BlogCard
+            <PostCard
               key={post.slug}
               post={post}
             />

@@ -12,7 +12,7 @@ export function useGenerateDemoData() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blogPostsAuthenticated'] });
+      queryClient.invalidateQueries({ queryKey: ['postsPaginated', 'posts'] });
       toast.success('Demo data generated successfully');
     },
     onError: (error) => {
@@ -30,7 +30,7 @@ export function useDeleteDemoData() {
       return client.queries.deleteDemoData();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blogPostsAuthenticated'] });
+      queryClient.invalidateQueries({ queryKey: ['postsPaginated', 'posts'] });
       toast.success('Demo data deleted successfully');
     },
     onError: (error) => {

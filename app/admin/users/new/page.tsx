@@ -1,6 +1,6 @@
 'use client';
 
-import { CreateUserForm } from '@/components/forms/CreateUserForm';
+import { CreateUserForm } from '@/features/users/forms/CreateUserForm';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';

@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { getUrl } from '@aws-amplify/storage/server';
 import { runWithAmplifyServerContext } from '@/lib/utils/amplify-utils';
 
@@ -18,7 +17,7 @@ const getImageUrl = async (imageKey: string) => {
   }
 };
 
-export default async function CoverImage({ imageKey, altText }: { imageKey: string, altText: string }) {
+export default async function PostCoverImage({ imageKey, altText }: { imageKey: string, altText: string }) {
   const imageUrl = await getImageUrl(imageKey);
   
   if (!imageUrl) {
@@ -27,10 +26,10 @@ export default async function CoverImage({ imageKey, altText }: { imageKey: stri
 
   return (
     <div className="relative w-full h-auto overflow-hidden">
-      <img 
+      <img
         src={imageUrl} 
         alt={altText} 
-        className="w-full h-auto"
+        className="w-full h-auto rounded-lg mb-4"
       />
     </div>
   );

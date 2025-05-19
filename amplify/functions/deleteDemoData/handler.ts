@@ -39,17 +39,17 @@ async function initializeAmplify() {
   }
 }
 
-async function deleteS3Objects(prefix: string, slug: string) {
+async function deleteS3Objects(prefix: string, id: string) {
   try {
     const command = new DeleteObjectCommand({
       Bucket: process.env.BLOG_STORAGE_BUCKET_NAME,
-      Key: `${prefix}/${slug}.md`
+      Key: `${prefix}/${id}.md`
     });
     await s3Client.send(command);
-    log(`Deleted ${prefix}/${slug}.md`);
+    log(`Deleted ${prefix}/${id}.md`);
   } catch (error) {
     if (error instanceof S3ServiceException) {
-      console.error(`Failed to delete S3 object ${prefix}/${slug}.md:`, {
+      console.error(`Failed to delete S3 object ${prefix}/${id}.md:`, {
         code: error.name,
         message: error.$metadata
       });
@@ -76,10 +76,10 @@ export const handler: Schema["deleteDemoData"]["functionHandler"] = async (event
     }
 
     // Get all blog posts with the "test" tag
-    const posts = await client.models.BlogPost.list({
+    const posts = await client.models.Post.list({
       filter: {
-        tags: {
-          contains: "__demo__"
+        isDemo: {
+          eq: true
         }
       }
     });
@@ -91,10 +91,10 @@ export const handler: Schema["deleteDemoData"]["functionHandler"] = async (event
         log(`Deleting post: ${post.slug}`);
 
         // Delete markdown content from S3
-        await deleteS3Objects('markdown', post.slug);
+        await deleteS3Objects('markdown', post.id);
 
         // Delete the blog post from DynamoDB
-        await client.models.BlogPost.delete(post);
+        await client.models.Post.delete(post);
         
         deletedPosts.push(post.slug);
         log(`Successfully deleted post: ${post.slug}`);

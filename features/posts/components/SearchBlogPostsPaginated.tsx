@@ -1,7 +1,7 @@
 "use client";
 
-import { BlogPostListPaginated } from "./BlogPostListPaginated";
-import { Input } from "./ui/input";
+import { PostListPaginated } from "./PostListPaginated";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
 export function SearchBlogPostsPaginated() {
@@ -15,7 +15,7 @@ export function SearchBlogPostsPaginated() {
         }}
       />
       <div id="top-of-list"></div>
-      <BlogPostListPaginated titleSearch={titleSearch} listClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" className="space-y-8" />
+      <PostListPaginated titleSearch={titleSearch} listClassName="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" className="space-y-8" />
     </div>
   );
 }

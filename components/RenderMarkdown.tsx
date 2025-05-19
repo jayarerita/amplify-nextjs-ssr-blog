@@ -10,8 +10,8 @@ const getMarkdownUrl = async (markdownKey: string) => {
     const markdownUrl = await runWithAmplifyServerContext({
       nextServerContext: null,
       operation: (contextSpec) =>{
-        console.log("contextSpec:", contextSpec)
-        console.log("markdownKey:", markdownKey)
+        //console.log("contextSpec:", contextSpec)
+        //console.log("markdownKey:", markdownKey)
       const url = getUrl(contextSpec, {
         path: markdownKey
       })

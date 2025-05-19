@@ -3,12 +3,12 @@ import { type Schema } from "@/amplify/data/resource";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-export function useUpdateBlogPost(showToast: boolean = true) {
+export function useUpdatePost(showToast: boolean = true) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ slug, input }: { slug: string, input: Partial<Schema["BlogPost"]["updateType"]> }) => {
-      return client.models.BlogPost.update({ slug, ...input}, { authMode: "userPool" });
+    mutationFn: async ({ id, input }: { id: string, input: Partial<Schema["Post"]["updateType"]> }) => {
+        return client.models.Post.update({ id, ...input}, { authMode: "userPool" });
     },
     onSuccess: (result, variables) => {
       if (result.errors && result.errors.length > 0) {
@@ -18,17 +18,16 @@ export function useUpdateBlogPost(showToast: boolean = true) {
       }
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ['blogPosts'] });
-      queryClient.invalidateQueries({ queryKey: ['blogPost', variables.slug] });
-      queryClient.invalidateQueries({ queryKey: ['blogPostsAuthenticated'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['post', variables.id] });
       
       if (showToast) {
-        toast.success("Blog post updated successfully");
+        toast.success("Post updated successfully");
       }
     },
     onError: (error) => {
       if (showToast) {
-        toast.error(error.message || "Failed to update blog post");
+        toast.error(error.message || "Failed to update post");
       }
       console.error(error);
     },
