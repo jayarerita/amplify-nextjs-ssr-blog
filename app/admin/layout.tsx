@@ -2,7 +2,7 @@
 
 import "@aws-amplify/ui-react/styles.css";
 import { Authenticator, ThemeProvider, Theme } from "@aws-amplify/ui-react";
-import { useGetUserProfilesInfinite } from "@/lib/hooks/use-get-user-profiles";
+import { useGetUserProfilesInfinite } from "@/features/users/database/use-get-user-profiles";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert } from "@/components/ui/alert";
 

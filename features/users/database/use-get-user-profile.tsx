@@ -1,4 +1,4 @@
-import { client } from "@/lib/clients/amplify-client";
+import { client } from "@/lib/clients/amplify-client.client";
 import { useQuery } from '@tanstack/react-query';
 
 export function useGetUserProfile(id: string) {

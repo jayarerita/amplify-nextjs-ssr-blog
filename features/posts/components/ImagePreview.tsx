@@ -1,13 +1,52 @@
+'use client';
+
 import { useEffect, useState } from 'react';
-import { BlogPostImage } from './BlogPostImage';
+import { PostCoverImage } from '@/features/posts/components/PostCoverImage';
 import { X } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from '../../../components/ui/button';
+import { getUrl } from 'aws-amplify/storage';
 
 interface ImagePreviewProps {
   imageFile?: File | null;
   imageKey?: string | null;
   altText?: string | null;
   onCancel?: () => void;
+}
+
+function PostCoverImageClient({ imageKey, altText }: { imageKey: string, altText: string }) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    async function fetchImageUrl() {
+      try {
+        const { url } = await getUrl({ path: imageKey });
+        setImageUrl(url.toString());
+      } catch (err) {
+        console.error('Error getting image URL:', err);
+        setError(err as Error);
+      }
+    }
+    fetchImageUrl();
+  }, [imageKey]);
+
+  if (error) {
+    return <div className="bg-muted h-full w-full flex items-center justify-center">Image failed to load</div>;
+  }
+
+  if (!imageUrl) {
+    return <div className="bg-muted h-full w-full animate-pulse" />;
+  }
+
+  return (
+    <div className="relative w-full h-auto overflow-hidden">
+      <img
+        src={imageUrl}
+        alt={altText}
+        className="w-full h-auto rounded-lg mb-4"
+      />
+    </div>
+  );
 }
 
 export function ImagePreview({ imageFile, imageKey, altText, onCancel }: ImagePreviewProps) {
@@ -57,7 +96,7 @@ export function ImagePreview({ imageFile, imageKey, altText, onCancel }: ImagePr
             )}
           </>
         ) : imageKey ? (
-          <BlogPostImage imageKey={imageKey} alt={altText || 'Current image'} />
+          <PostCoverImageClient imageKey={imageKey} altText={altText || 'Current image'} />
         ) : null}
       </div>
     </div>

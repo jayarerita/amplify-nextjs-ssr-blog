@@ -1,7 +1,7 @@
 'use client';
 
 import { useUpdatePost } from '@/features/posts/database/use-update-post';
-import { useGetMarkdown } from '@/lib/hooks/use-get-markdown';
+import { useGetMarkdown } from '@/features/posts/database/use-get-markdown';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -22,9 +22,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { type Schema } from "@/amplify/data/resource";
 import { Switch } from '@/components/ui/switch';
 import rehypeSanitize from 'rehype-sanitize';
-import { ImagePreview } from '../../../components/ImagePreview';
+import { ImagePreview } from '../components/ImagePreview';
 import ReactMarkdown from 'react-markdown';
-import { CodeBlock } from '@/components/MarkdownCodeBlock';
+import { CodeBlock } from '@/features/posts/components/MarkdownCodeBlock';
 import { useCreatePost } from '@/features/posts/database/use-create-post';
 import { useCreatePostTag } from '@/features/posts/database/use-create-post-tag';
 import { useCreateTag } from '@/features/posts/database/use-create-tag';
@@ -77,13 +77,21 @@ export function PostForm({ post, mode }: PostFormProps) {
     enabled: mode === 'edit' && !!post?.markdownKey
   });
   const [markdown, setMarkdown] = useState<string>(mode === 'create' ? '' : '');
+  const [debouncedMarkdown, setDebouncedMarkdown] = useState(markdown);
 
-  // Set markdown content when loaded in edit mode
   useEffect(() => {
     if (markdownContent && mode === 'edit') {
       setMarkdown(markdownContent);
     }
   }, [markdownContent, mode]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedMarkdown(markdown);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(handler);
+  }, [markdown]);
 
   const resizeImage = async (image: File, width: number, height: number) => {
     const canvas = document.createElement('canvas');
@@ -839,12 +847,10 @@ export function PostForm({ post, mode }: PostFormProps) {
         <div className="container" data-color-mode={theme} id="md-editor">
           <div className="markdown h-[500px] overflow-y-auto border rounded-lg">
             <ReactMarkdown
-              components={{
-                code: CodeBlock
-              }}
+              components={{ code: CodeBlock }}
               rehypePlugins={[rehypeSanitize]}
             >
-              {markdown}
+              {debouncedMarkdown}
             </ReactMarkdown>
           </div>
         </div>

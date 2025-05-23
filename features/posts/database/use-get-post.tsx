@@ -1,4 +1,4 @@
-import { client } from "@/lib/clients/amplify-client";
+import { client } from "@/lib/clients/amplify-client.client";
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { Schema } from "@/amplify/data/resource";
 

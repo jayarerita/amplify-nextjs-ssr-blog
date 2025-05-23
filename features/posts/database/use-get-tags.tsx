@@ -1,4 +1,4 @@
-import { client } from "@/lib/clients/amplify-client";
+import { client } from "@/lib/clients/amplify-client.client";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
 const getTags = async ({

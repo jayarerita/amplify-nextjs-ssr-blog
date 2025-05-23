@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { UserPlus, Search, ChevronRight, Loader2 } from 'lucide-react';
 import { UserCard } from '@/features/users/UserCard';
-import { useGetUserProfilesInfinite } from '@/lib/hooks/use-get-user-profiles';
+import { useGetUserProfilesInfinite } from '@/features/users/database/use-get-user-profiles';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';

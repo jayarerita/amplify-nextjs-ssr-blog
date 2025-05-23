@@ -17,7 +17,7 @@ const getImageUrl = async (imageKey: string) => {
   }
 };
 
-export default async function PostCoverImage({ imageKey, altText }: { imageKey: string, altText: string }) {
+export async function PostCoverImage({ imageKey, altText }: { imageKey: string, altText: string }) {
   const imageUrl = await getImageUrl(imageKey);
   
   if (!imageUrl) {

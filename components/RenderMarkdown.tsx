@@ -2,7 +2,7 @@ import ReactMarkdown from 'react-markdown';
 import { getUrl } from '@aws-amplify/storage/server';
 import { runWithAmplifyServerContext } from '@/lib/utils/amplify-utils';
 import rehypeSanitize from 'rehype-sanitize';
-import { CodeBlock } from '@/components/MarkdownCodeBlock';
+import { CodeBlock } from '@/features/posts/components/MarkdownCodeBlock';
 import { Alert } from '@/components/ui/alert';
 
 const getMarkdownUrl = async (markdownKey: string) => {

@@ -2,7 +2,7 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useGetUserProfile } from "@/lib/hooks/use-get-user-profile";
+import { useGetUserProfile } from "@/features/users/database/use-get-user-profile";
 
 export const PostCardAuthor = ({ authorId }: { authorId: string }) => {
   const { data: userProfile, isLoading: isUserProfileLoading } = useGetUserProfile(authorId);

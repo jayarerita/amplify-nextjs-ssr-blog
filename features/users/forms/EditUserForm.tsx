@@ -1,7 +1,7 @@
 'use client';
 
-import { useGetUserProfile } from '@/lib/hooks/use-get-user-profile';
-import { useUpdateUser, type UpdateUserInput } from '@/lib/hooks/use-update-user';
+import { useGetUserProfile } from '@/features/users/database/use-get-user-profile';
+import { useUpdateUser, type UpdateUserInput } from '@/features/users/database/use-update-user';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -16,12 +16,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 const formSchema = z.object({
-  username: z.string().min(1, 'Username is required').max(50, 'Username is too long'),
+  username: z.string().min(1, 'Username is required').max(50, 'Username is too long').readonly(),
   displayName: z.string().min(1, 'Display name is required').max(100, 'Display name is too long'),
   email: z.string().email('Invalid email address'),
   bio: z.string().max(500, 'Bio is too long').optional(),
   avatar: z.string().optional(),
-  role: z.enum(['user', 'admin']).default('user'),
+  role: z.enum(['user', 'admin']).default('user').readonly(),
 });
 
 interface EditUserFormProps {
@@ -120,106 +120,188 @@ export function EditUserForm({ userId }: EditUserFormProps) {
         </Alert>
       )}
 
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="username">Username</Label>
-          <Input
-            id="username"
-            defaultValue={user.username}
-            {...form.getFieldProps('username')}
-            placeholder="username"
-          />
-          {form.getFieldError('username') && (
-            <p className="mt-1 text-sm text-red-500">{form.getFieldError('username')}</p>
-          )}
-        </div>
+      <form.Field
+        name="username"
+        validators={{
+          onChange: ({ value }) => {
+            const result = formSchema.shape.username.safeParse(value);
+            return result.success ? undefined : result.error.errors[0].message;
+          },
+        }}
+      >
+        {(field) => (
+          <div>
+            <Label htmlFor={field.name}>Username</Label>
+            <Input
+              id={field.name}
+              name={field.name}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              placeholder="username"
+              disabled
+            />
+            {field.state.meta.errors ? (
+              <p className="mt-1 text-sm text-red-500">{field.state.meta.errors.join(', ')}</p>
+            ) : null}
+          </div>
+        )}
+      </form.Field>
 
-        <div>
-          <Label htmlFor="displayName">Display Name</Label>
-          <Input
-            id="displayName"
-            defaultValue={user.displayName}
-            {...form.getFieldProps('displayName')}
-            placeholder="Display Name"
-          />
-          {form.getFieldError('displayName') && (
-            <p className="mt-1 text-sm text-red-500">{form.getFieldError('displayName')}</p>
-          )}
-        </div>
+      <form.Field
+        name="displayName"
+        validators={{
+          onChange: ({ value }) => {
+            const result = formSchema.shape.displayName.safeParse(value);
+            return result.success ? undefined : result.error.errors[0].message;
+          },
+        }}
+      >
+        {(field) => (
+          <div>
+            <Label htmlFor={field.name}>Display Name</Label>
+            <Input
+              id={field.name}
+              name={field.name}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              placeholder="Display Name"
+            />
+            {field.state.meta.errors ? (
+              <p className="mt-1 text-sm text-red-500">{field.state.meta.errors.join(', ')}</p>
+            ) : null}
+          </div>
+        )}
+      </form.Field>
 
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            defaultValue={user.email}
-            {...form.getFieldProps('email')}
-            placeholder="user@example.com"
-          />
-          {form.getFieldError('email') && (
-            <p className="mt-1 text-sm text-red-500">{form.getFieldError('email')}</p>
-          )}
-        </div>
+      <form.Field
+        name="email"
+        validators={{
+          onChange: ({ value }) => {
+            const result = formSchema.shape.email.safeParse(value);
+            return result.success ? undefined : result.error.errors[0].message;
+          },
+        }}
+      >
+        {(field) => (
+          <div>
+            <Label htmlFor={field.name}>Email</Label>
+            <Input
+              id={field.name}
+              name={field.name}
+              type="email"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              placeholder="user@example.com"
+            />
+            {field.state.meta.errors ? (
+              <p className="mt-1 text-sm text-red-500">{field.state.meta.errors.join(', ')}</p>
+            ) : null}
+          </div>
+        )}
+      </form.Field>
 
-        <div>
-          <Label htmlFor="bio">Bio</Label>
-          <Textarea
-            id="bio"
-            defaultValue={user.bio || ''}
-            {...form.getFieldProps('bio')}
-            placeholder="User bio"
-            rows={3}
-          />
-          {form.getFieldError('bio') && (
-            <p className="mt-1 text-sm text-red-500">{form.getFieldError('bio')}</p>
-          )}
-        </div>
+      <form.Field
+        name="bio"
+        validators={{
+          onChange: ({ value }) => {
+            const result = formSchema.shape.bio.safeParse(value);
+            return result.success ? undefined : result.error.errors[0].message;
+          },
+        }}
+      >
+        {(field) => (
+          <div>
+            <Label htmlFor={field.name}>Bio</Label>
+            <Textarea
+              id={field.name}
+              name={field.name}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              placeholder="User bio"
+              rows={3}
+            />
+            {field.state.meta.errors ? (
+              <p className="mt-1 text-sm text-red-500">{field.state.meta.errors.join(', ')}</p>
+            ) : null}
+          </div>
+        )}
+      </form.Field>
 
-        <div>
-          <Label htmlFor="avatar">Avatar URL</Label>
-          <Input
-            id="avatar"
-            defaultValue={user.avatar || ''}
-            {...form.getFieldProps('avatar')}
-            placeholder="https://example.com/avatar.jpg"
-          />
-          {form.getFieldError('avatar') && (
-            <p className="mt-1 text-sm text-red-500">{form.getFieldError('avatar')}</p>
-          )}
-        </div>
+      <form.Field
+        name="avatar"
+        validators={{
+          onChange: ({ value }) => {
+            const result = formSchema.shape.avatar.safeParse(value);
+            return result.success ? undefined : result.error.errors[0].message;
+          },
+        }}
+      >
+        {(field) => (
+          <div>
+            <Label htmlFor={field.name}>Avatar URL</Label>
+            <Input
+              id={field.name}
+              name={field.name}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              placeholder="https://example.com/avatar.jpg"
+            />
+            {field.state.meta.errors ? (
+              <p className="mt-1 text-sm text-red-500">{field.state.meta.errors.join(', ')}</p>
+            ) : null}
+          </div>
+        )}
+      </form.Field>
 
-        <div>
-          <Label>Role</Label>
-          <RadioGroup 
-            defaultValue={user.role || 'user'}
-            onValueChange={(value) => form.setFieldValue('role', value as 'user' | 'admin')}
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="user" id="user" />
-              <Label htmlFor="user">User</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="admin" id="admin" />
-              <Label htmlFor="admin">Admin</Label>
-            </div>
-          </RadioGroup>
-          {form.getFieldError('role') && (
-            <p className="mt-1 text-sm text-red-500">{form.getFieldError('role')}</p>
-          )}
-        </div>
-      </div>
+      <form.Field
+        name="role"
+        validators={{
+          onChange: ({ value }) => {
+            const result = formSchema.shape.role.safeParse(value);
+            return result.success ? undefined : result.error.errors[0].message;
+          },
+        }}
+      >
+        {(field) => (
+          <div>
+            <Label>Role</Label>
+            <RadioGroup
+              value={field.state.value}
+              onValueChange={(value) => field.handleChange(value as 'user' | 'admin')}
+              disabled
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="user" id="user" />
+                <Label htmlFor="user">User</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="admin" id="admin" />
+                <Label htmlFor="admin">Admin</Label>
+              </div>
+            </RadioGroup>
+            {field.state.meta.errors ? (
+              <p className="mt-1 text-sm text-red-500">{field.state.meta.errors.join(', ')}</p>
+            ) : null}
+          </div>
+        )}
+      </form.Field>
 
       <div className="flex space-x-4">
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           disabled={isPending}
           className="flex-1"
         >
           {isPending ? 'Updating User...' : 'Update User'}
         </Button>
-        <Button 
-          type="button" 
-          variant="outline" 
+        <Button
+          type="button"
+          variant="outline"
           onClick={() => router.push('/admin/users')}
           className="flex-1"
         >

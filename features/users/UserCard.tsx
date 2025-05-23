@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash } from "lucide-react";
+import { Edit, Trash, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type UserProfileType = Schema["UserProfile"]["type"];
@@ -57,14 +57,22 @@ export function UserCard({ user, onDelete }: UserCardProps) {
         )}
       </CardContent>
       <CardFooter className="flex justify-between border-t p-4">
+        <span className="flex gap-2">
         <Button 
           variant="outline" 
           size="sm"
-          onClick={() => router.push(`/admin/users/edit/${user.id}`)}
+          onClick={() => router.push(`/admin/users/${user.id}/edit`)}
         >
-          <Edit className="mr-2 h-4 w-4" />
-          Edit
+          <Edit className="h-4 w-4" />
         </Button>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => router.push(`/admin/users/${user.id}`)}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+        </span>
         {onDelete && (
           <Button 
             variant="destructive" 

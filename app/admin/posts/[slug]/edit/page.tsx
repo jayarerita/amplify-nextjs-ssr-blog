@@ -4,10 +4,9 @@ import { PostForm } from '@/features/posts/forms/EditPost';
 import { useGetPost } from '@/features/posts/database/use-get-post';
 import { useParams } from 'next/navigation';
 
-export default function PostEditPage() {
+export default function PostPage() {
   const params = useParams();
   const slug = params.slug as string;
-
   
   const { data: post, isLoading } = useGetPost(slug);
 

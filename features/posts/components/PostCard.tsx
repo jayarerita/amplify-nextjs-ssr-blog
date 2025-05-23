@@ -3,25 +3,32 @@ import { formatDate } from '@/lib/utils';
 import { MagicCard } from '@/components/magicui/magic-card';
 import {PostImage} from './PostImage';
 import { Schema } from '@/amplify/data/resource';
-import { useGetUserProfile } from '@/lib/hooks/use-get-user-profile';
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import { Button } from '@/components/ui/button';
-import { Edit } from 'lucide-react';
+import { EditPostButton } from './EditPostButton';
 import { PostCardAuthor } from './PostCardAuthor';
 import { PostTags } from './PostTags';
+import { AuthGetCurrentUserServer } from "@/lib/utils/amplify-utils";
+import { cookiesClient } from "@/lib/utils/amplify-utils";
 
-
-export function PostCard({
+export async function PostCard({
   post,
 }: {
   post: Schema["Post"]["type"],
 }) {
-  const { user, route } = useAuthenticator((context) => [context.user, context.route]);
-  const { data: userProfile } = useGetUserProfile(user?.userId || '');
+  //const { user, route } = useAuthenticator((context) => [context.user, context.route]);
+  const user = await AuthGetCurrentUserServer();
+
+  //const { data: userProfile } = useGetUserProfile(user?.userId || '');
+
+  const { data: userProfile, errors: userProfileErrors } = await cookiesClient.models.UserProfile.get({ id: user?.userId || '' });
+
+  if (userProfileErrors || !userProfile) {
+    console.log('User profile not found');
+    return null;
+  }
   
   // Check if user is authenticated and is either the post owner or has admin role
   const canEdit = 
-    route === 'authenticated' && 
+    //route === 'authenticated' && 
     user && 
     (user.userId === post.owner || userProfile?.role === 'admin');
 
@@ -47,7 +54,7 @@ export function PostCard({
               {formatDate(post.publishedAt)}
             </time>
             )}
-            <PostTags post={post} />
+            <PostTags postId={post.id} />
           </div>
 
           <PostCardAuthor authorId={post.owner} />
@@ -65,20 +72,7 @@ export function PostCard({
       
       {/* Edit button - only visible for authenticated users who are the author or admin */}
       {canEdit && (
-        <Link 
-          href={`/admin/blog/edit/${post.slug}`}
-          className="absolute top-4 right-4 z-10"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Button 
-            size="icon" 
-            variant="ghost"
-            className="rounded-full w-8 h-8 cursor-pointer bg-foreground/30 hover:bg-background/50 text-primary-foreground"
-          >
-            <Edit className="h-4 w-4" />
-            <span className="sr-only">Edit post</span>
-          </Button>
-        </Link>
+        <EditPostButton slug={post.slug} />
       )}
     </MagicCard>
   );

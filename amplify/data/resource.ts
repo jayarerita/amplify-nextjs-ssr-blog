@@ -3,7 +3,7 @@ import { postConfirmation } from "../auth/post-confirmation/resource";
 import { demoData } from "../functions/demoData/resource";
 import { deleteDemoData } from "../functions/deleteDemoData/resource";
 import { preSignUp } from "../auth/pre-signup/resource";
-
+import { createUser } from "../functions/createUser/resource";
 const schema = a.schema({
 
   PostTag: a.model({
@@ -84,13 +84,28 @@ const schema = a.schema({
     .query()
     .returns(a.json())
     .authorization(allow => [allow.authenticated("identityPool")])
-    .handler(a.handler.function(deleteDemoData))
+    .handler(a.handler.function(deleteDemoData)),
+
+  createUser: a
+    .mutation()
+    .arguments({
+      username: a.string().required(),
+      email: a.string().required(),
+      password: a.string().required(),
+      displayName: a.string().required(),
+      bio: a.string().required(),
+    })
+    .returns(a.json())
+    .authorization(allow => [allow.authenticated("identityPool")])
+    .handler(a.handler.function(createUser)),
+    
 })
 .authorization((allow) => [
   allow.resource(postConfirmation),
   allow.resource(demoData),
   allow.resource(deleteDemoData),
-  allow.resource(preSignUp)
+  allow.resource(preSignUp),
+  allow.resource(createUser)
 ]);
 
 export type Schema = ClientSchema<typeof schema>;

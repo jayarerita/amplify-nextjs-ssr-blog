@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { cookiesClient } from "@/lib/utils/amplify-utils";
 import RenderMarkdown from '@/components/RenderMarkdown';
 import { Metadata, ResolvingMetadata } from 'next';
-import CoverImage from '@/features/posts/components/PostCoverImage';
+import { PostCoverImage } from '@/features/posts/components/PostCoverImage';
 import { PostCardAuthor } from '@/features/posts/components/PostCardAuthor';
 
 type Props = {
@@ -78,7 +78,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
     notFound();
   }
 
-  if (!posts) {
+  if (!posts || posts.length === 0 || !posts[0]) {
     notFound();
   }
 
@@ -87,7 +87,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   return (
     <main className="min-h-screen p-8 max-w-4xl mx-auto post">
       {post.coverImageKey && (
-        <CoverImage imageKey={post.coverImageKey} altText={post.coverImageAlt ?? post.title}/>
+        <PostCoverImage imageKey={post.coverImageKey} altText={post.coverImageAlt ?? post.title}/>
       )}
       <h1 className="mb-4">{post.title}</h1>
       <PostCardAuthor authorId={post.owner} />

@@ -1,4 +1,4 @@
-import { client } from '@/lib/clients/amplify-client';
+import { client } from '@/lib/clients/amplify-client.client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 

@@ -1,23 +1,13 @@
-import { client } from "@/lib/clients/amplify-client";
+import { client } from "@/lib/clients/amplify-client.client";
 import { type Schema } from "@/amplify/data/resource";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-
-export type CreateUserInput = {
-  username: string;
-  displayName: string;
-  email: string;
-  bio?: string;
-  avatar?: string;
-  profileOwner: string;
-  role: "user" | "admin";
-};
 
 export function useCreateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: CreateUserInput) => {
+    mutationFn: async (input: Schema["UserProfile"]["createType"]) => {
       return client.models.UserProfile.create(
         {
           id: input.username,

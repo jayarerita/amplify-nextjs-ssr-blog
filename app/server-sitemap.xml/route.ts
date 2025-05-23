@@ -1,4 +1,4 @@
-import { cookieBasedClient } from '@/lib/clients/amplify-server-client';
+import { cookieBasedClient } from '@/lib/clients/amplify-client.server';
 import { MetadataRoute } from 'next';
 
 export async function GET(): Promise<MetadataRoute.Sitemap> {

@@ -1,9 +1,10 @@
+'use client';
+
 import { useState, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { X, Plus } from 'lucide-react';
-import { useGetTags } from '@/lib/hooks/use-get-tags';
+import { useGetTags } from '@/features/posts/database/use-get-tags';
 import { FormTag } from '@/features/posts/types/types';
 
 interface TagSelectorProps {

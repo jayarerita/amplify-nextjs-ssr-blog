@@ -1,7 +1,10 @@
 import { ResolvingMetadata } from "next";
 import { Metadata } from "next";
 import { cookiesClient } from "@/lib/utils/amplify-utils";
-import { BlogCard } from "@/features/posts/components/PostCard";
+import { PostCard } from "@/features/posts/components/PostCard";
+import React from "react";
+
+
 
 type Props = {
   params: Promise<{ tag: string }>
@@ -50,13 +53,12 @@ export default async function Page({ params }: Props) {
   const validPosts = posts.filter(Boolean);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {validPosts.map(post => {
-        if (post) {
-          return <BlogCard key={post.id} post={post} />
-        }
-        return null;
-      })}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 my-8">
+      {(await Promise.all(
+        validPosts.map(async (post) =>
+          post ? await PostCard({ post }) : null
+        )
+      )).map((card, i) => card && <React.Fragment key={validPosts[i]?.id || i}>{card}</React.Fragment>)}
     </div>
   )
 }

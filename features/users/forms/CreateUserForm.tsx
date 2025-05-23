@@ -1,6 +1,6 @@
 'use client';
 
-import { useCreateUser, type CreateUserInput } from '@/lib/hooks/use-create-user';
+import { useCreateUser } from '@/features/users/database/use-create-user';
 import { useForm } from '@tanstack/react-form';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
@@ -12,11 +12,14 @@ import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { toast } from 'sonner';
+import { type Schema } from '@/amplify/data/resource';
+import { signUp } from '@aws-amplify/auth';
 
 const formSchema = z.object({
   username: z.string().min(1, 'Username is required').max(50, 'Username is too long'),
   displayName: z.string().min(1, 'Display name is required').max(100, 'Display name is too long'),
   email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters long'),
   bio: z.string().max(500, 'Bio is too long').optional(),
 });
 
@@ -33,6 +36,7 @@ export function CreateUserForm() {
       bio: '',
       avatar: '',
       role: 'user' as const,
+      password: '',
     },
     onSubmit: async (form) => {
       try {
@@ -40,7 +44,7 @@ export function CreateUserForm() {
           throw new Error('Admin user not found');
         }
 
-        const userData: CreateUserInput = {
+        const userData: Schema["UserProfile"]["createType"] = {
           username: form.value.username,
           displayName: form.value.displayName,
           email: form.value.email,
@@ -51,15 +55,37 @@ export function CreateUserForm() {
           profileOwner: user.username, // Will be replace by the backend api call to create a new user
         };
 
-        createUser(userData, {
-          onSuccess: () => {
-            toast.success('User created successfully');
-            router.push('/admin/users');
+        // createUser(userData, {
+        //   onSuccess: () => {
+        //     toast.success('User created successfully');
+        //     router.push('/admin/users');
+        //   },
+        //   onError: (error) => {
+        //     toast.error('Error creating user: ' + error.message);
+        //   },
+        // });
+
+        const { isSignUpComplete, userId, nextStep } = await signUp({
+          username: form.value.email,
+          password: form.value.password,
+          options: {
+
+            userAttributes: {
+              email: form.value.email,
+            },
           },
-          onError: (error) => {
-            toast.error('Error creating user: ' + error.message);
-          },
+          
         });
+        console.log(isSignUpComplete, userId, nextStep);
+        if (isSignUpComplete) {
+          toast.success('User created successfully');
+          router.push('/admin/users');
+        } else {
+          toast.error('Error creating user: ' + (nextStep as unknown as Error).message);
+        }
+        if (nextStep?.signUpStep === 'CONFIRM_SIGN_UP') {
+          toast.info('Please confirm your email');
+        }
       } catch (error) {
         toast.error('Error creating user: ' + (error as Error).message);
       }
@@ -104,6 +130,33 @@ export function CreateUserForm() {
               <p className="text-sm text-red-600">{field.state.meta.errors.join(', ')}</p>
             ) : null}
         </div>
+        )}
+      </form.Field>
+
+      <form.Field
+      name="password"
+      validators={{
+        onChange: ({ value }) => {
+          const result = formSchema.shape.password.safeParse(value);
+          return result.success ? undefined : result.error.errors[0].message;
+        },
+      }}
+      >
+        {( field ) => (
+          <div className="space-y-4">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id={field.name}
+              name={field.name}
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              placeholder="Password"
+            />
+            {field.state.meta.errors ? (
+              <p className="mt-1 text-sm text-red-500">{field.state.meta.errors.join(', ')}</p>
+            ) : null}
+          </div>
         )}
       </form.Field>
 
